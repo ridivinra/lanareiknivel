@@ -28,11 +28,23 @@ server <- function(input, output, session) {
   
   pred <- eventReactive(input$go, {
     res <- calcLoan(input)
+    pHofudstoll <- ggplotly(
+      ggplot(res, aes(t/12,HofudstollEftir/1000000)) + 
+        geom_line() + 
+        scale_y_continuous(name = "Höfuðstóll [m.ISK]") + 
+        scale_x_continuous(name = "Tími [Ár]", breaks = seq(0,max(res$t/12),1)) + 
+        theme_bw()
+      )
+    pGreidslur <- ggplotly(
+      ggplot(res, aes(t/12,greidsla/1000)) + 
+        geom_line() + 
+        scale_y_continuous(limits = c(0,NA), breaks = seq(0,1000,50),name = "Greiðsla [þ.ISK]") + 
+        scale_x_continuous(name = "Tími [Ár]", breaks = seq(0,max(res$t/12),1)) + 
+        theme_bw()
+      )
     return(list(
-      plot = ggplotly(
-        ggplot(res, aes(t,HofudstollEftir)) + 
-          geom_line() + 
-          theme_bw()),
+      lanaPlot = pHofudstoll,
+      greidsluPlot = pGreidslur,
       table = 
         head(res) %>% 
           kable(format = "html", col.names = c("Höfuðstóll", "Greiðsla", 
@@ -41,7 +53,8 @@ server <- function(input, output, session) {
       )
   }, ignoreNULL = FALSE)
   
-  output$lanaPlot <- renderPlotly(pred()$plot)
+  output$lanaPlot <- renderPlotly(pred()$lanaPlot)
+  output$greidsluPlot <- renderPlotly(pred()$greidsluPlot)
   output$lanaTafla <- function(){
     pred()$table
   }
